@@ -1,3 +1,4 @@
+/* Performance-tuned 300-frame controller — same visual system, lighter initial load. */
 (() => {
   const TOTAL_FRAMES = 300;
   const FRAME_DIR = 'video_frames';
@@ -12,9 +13,11 @@
   const hudFrame = document.getElementById('hud-frame');
   const scrollProgressBar = document.getElementById('scroll-progress');
 
-  // Preloaded image storage for all 300 frames
+  // Frame cache: only nearby frames are loaded initially; the rest stream in on demand.
   const frameImages = new Array(TOTAL_FRAMES);
+  const loadingFrames = new Set();
   let loadedFrames = 0;
+  let initialReady = false;
 
   // Animation & scroll state
   let currentFrame = 0;
@@ -28,49 +31,61 @@
     return `${FRAME_DIR}/${FRAME_PREFIX}${padded}${FRAME_EXT}`;
   }
 
-  // Preload all 300 frames sequentially without skipping any frame
-  function preloadAllFrames() {
-    return new Promise((resolve) => {
-      // First frame for instant render
-      const firstImg = new Image();
-      firstImg.src = getFramePath(0);
-      firstImg.onload = () => {
-        frameImages[0] = firstImg;
-        loadedFrames++;
-        renderFrame(0);
-        updateProgress();
+  function loadFrame(index) {
+    if (index < 0 || index >= TOTAL_FRAMES || frameImages[index] || loadingFrames.has(index)) return;
+    loadingFrames.add(index);
 
-        let remaining = TOTAL_FRAMES - 1;
-        for (let i = 1; i < TOTAL_FRAMES; i++) {
-          const img = new Image();
-          img.src = getFramePath(i);
+    const img = new Image();
+    img.decoding = 'async';
+    img.loading = 'eager';
+    img.src = getFramePath(index);
 
-          const onFinish = () => {
-            loadedFrames++;
-            updateProgress();
-            remaining--;
-            if (remaining === 0) {
-              resolve();
-            }
-          };
+    img.onload = async () => {
+      try { await img.decode(); } catch (_) {}
+      frameImages[index] = img;
+      loadedFrames++;
+      loadingFrames.delete(index);
+      updateProgress();
+      if (!initialReady && index <= 7) renderFrame(index);
+    };
+    img.onerror = () => {
+      loadingFrames.delete(index);
+      updateProgress();
+    };
+  }
 
-          img.onload = () => {
-            frameImages[i] = img;
-            onFinish();
-          };
+  function preloadInitialFrames() {
+    // First 8 frames give an immediate hero; remaining frames are requested after paint.
+    for (let i = 0; i < 8; i++) loadFrame(i);
+    setTimeout(scheduleNearbyFrames, 0);
+  }
 
-          img.onerror = () => {
-            console.error(`Could not load frame ${i}`);
-            onFinish();
-          };
-        }
-      };
+  let lastScheduledCenter = -999;
+  function scheduleNearbyFrames() {
+    const center = Math.round(targetFrame);
+    if (Math.abs(center - lastScheduledCenter) < 6) return;
+    lastScheduledCenter = center;
+    const center = Math.round(targetFrame);
+    for (let offset = -12; offset <= 12; offset++) loadFrame(center + offset);
 
-      firstImg.onerror = () => {
-        console.error('Could not load initial frame 0');
-        resolve();
-      };
-    });
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => {
+        for (let i = 0; i < TOTAL_FRAMES; i += 1) loadFrame(i);
+      }, { timeout: 1800 });
+    } else {
+      setTimeout(() => {
+        for (let i = 0; i < TOTAL_FRAMES; i += 1) loadFrame(i);
+      }, 900);
+    }
+  }
+
+  function getBestAvailableFrame(index) {
+    if (frameImages[index]) return index;
+    for (let d = 1; d < TOTAL_FRAMES; d++) {
+      if (frameImages[index - d]) return index - d;
+      if (frameImages[index + d]) return index + d;
+    }
+    return -1;
   }
 
   function updateProgress() {
@@ -95,11 +110,13 @@
   // Draw image with aspect-ratio preserving cover mode
   function renderFrame(index) {
     const clampedIndex = Math.max(0, Math.min(TOTAL_FRAMES - 1, index));
-    const img = frameImages[clampedIndex];
+    const availableIndex = getBestAvailableFrame(clampedIndex);
+    if (availableIndex < 0) return;
+    const img = frameImages[availableIndex];
     if (!img || !img.complete || img.naturalWidth === 0) return;
 
-    if (clampedIndex === lastRenderedFrame) return;
-    lastRenderedFrame = clampedIndex;
+    if (availableIndex === lastRenderedFrame) return;
+    lastRenderedFrame = availableIndex;
 
     const cw = canvas.width;
     const ch = canvas.height;
@@ -127,7 +144,7 @@
 
     // Live HUD Frame Counter
     if (hudFrame) {
-      hudFrame.textContent = `Frame: ${String(clampedIndex + 1).padStart(3, '0')} / ${TOTAL_FRAMES}`;
+      hudFrame.textContent = `Frame: ${String(availableIndex + 1).padStart(3, '0')} / ${TOTAL_FRAMES}`;
     }
   }
 
@@ -143,6 +160,7 @@
 
     const scrollFraction = Math.max(0, Math.min(1, window.scrollY / maxScroll));
     targetFrame = scrollFraction * (TOTAL_FRAMES - 1);
+    scheduleNearbyFrames();
 
     // Top progress bar update
     if (scrollProgressBar) {
@@ -188,15 +206,16 @@
     updateScroll();
     requestAnimationFrame(animationLoop);
 
-    await preloadAllFrames();
+    preloadInitialFrames();
 
-    isReady = true;
-    updateScroll();
-    currentFrame = targetFrame;
-    renderFrame(Math.round(currentFrame));
-
+    // Don't block the portfolio behind all 300 requests.
     setTimeout(() => {
+      isReady = true;
+      initialReady = true;
+      updateScroll();
+      currentFrame = targetFrame;
+      renderFrame(Math.round(currentFrame));
       loader.classList.add('loaded');
-    }, 200);
+    }, 120);
   });
 })();
