@@ -6,15 +6,15 @@
   --bg-dark: #090707;
   --bg-surface: rgba(18, 14, 15, 0.72);
   --bg-surface-hover: rgba(28, 20, 22, 0.88);
-  --accent-red: #e11d48;
-  --accent-crimson: #a81c23;
-  --accent-glow: rgba(225, 29, 72, 0.35);
-  --accent-amber: #f59e0b;
+  --accent-red: #7c5cff;
+  --accent-crimson: #4f46e5;
+  --accent-glow: rgba(124, 92, 255, 0.32);
+  --accent-amber: #22d3ee;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --text-dim: #64748b;
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-red: rgba(225, 29, 72, 0.28);
+  --border-red: rgba(124, 92, 255, 0.28);
   --font-serif-giant: 'Bebas Neue', sans-serif;
   --font-cursive: 'Caveat', cursive;
   --font-heading: 'Outfit', sans-serif;
@@ -51,7 +51,7 @@ body {
   background: #080606;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(225, 29, 72, 0.4);
+  background: rgba(124, 92, 255, 0.4);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -102,7 +102,7 @@ body {
 .loader-spinner {
   width: 48px;
   height: 48px;
-  border: 3px solid rgba(225, 29, 72, 0.18);
+  border: 3px solid rgba(124, 92, 255, 0.18);
   border-top-color: var(--accent-red);
   border-radius: 50%;
   animation: spin 0.85s linear infinite;
@@ -317,7 +317,7 @@ body {
 }
 
 .availability-pill:hover {
-  background: rgba(225, 29, 72, 0.15);
+  background: rgba(124, 92, 255, 0.15);
   border-color: var(--accent-red);
   box-shadow: 0 0 20px var(--accent-glow);
 }
@@ -473,7 +473,7 @@ body {
 .feature-icon-wrap {
   width: 42px;
   height: 42px;
-  background: rgba(225, 29, 72, 0.12);
+  background: rgba(124, 92, 255, 0.12);
   border: 1px solid var(--border-red);
   border-radius: 50%;
   display: flex;
@@ -592,7 +592,7 @@ body {
   transform: translateY(-8px);
   background: var(--bg-surface-hover);
   border-color: var(--border-red);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(225, 29, 72, 0.15);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(124, 92, 255, 0.15);
 }
 
 .project-preview {
@@ -662,7 +662,7 @@ body {
 
 .red-badge {
   background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
+  color: #a78bfa;
 }
 
 .purple-badge {
@@ -913,7 +913,7 @@ body {
 .skill-tag:hover {
   border-color: var(--accent-red);
   color: #ffffff;
-  background: rgba(225, 29, 72, 0.12);
+  background: rgba(124, 92, 255, 0.12);
   transform: translateY(-2px);
 }
 
@@ -973,7 +973,7 @@ body {
   color: var(--accent-red);
   flex-shrink: 0;
   z-index: 2;
-  box-shadow: 0 0 12px rgba(225, 29, 72, 0.15);
+  box-shadow: 0 0 12px rgba(124, 92, 255, 0.15);
 }
 
 .step-title {
@@ -1021,7 +1021,7 @@ body {
 .quote-signature {
   font-family: var(--font-cursive);
   font-size: 34px;
-  color: #f87171;
+  color: #a78bfa;
   margin-bottom: 30px;
   transform: rotate(-3deg);
 }
@@ -1063,7 +1063,7 @@ body {
   grid-template-columns: 1.1fr 1.3fr 1fr;
   align-items: center;
   gap: 36px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(225, 29, 72, 0.12);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(124, 92, 255, 0.12);
   margin-bottom: 40px;
 }
 
@@ -1124,7 +1124,7 @@ body {
 }
 
 .contact-link-pill:hover {
-  background: rgba(225, 29, 72, 0.14);
+  background: rgba(124, 92, 255, 0.14);
   border-color: var(--accent-red);
   color: #ffffff;
   transform: translateX(6px);
@@ -1215,7 +1215,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 8px;
-  border: 1px solid rgba(225, 29, 72, 0.2);
+  border: 1px solid rgba(124, 92, 255, 0.2);
 }
 
 .laptop-hero-text {
@@ -1295,7 +1295,7 @@ body {
 .badge-sub {
   font-size: 8.5px;
   text-transform: uppercase;
-  background: rgba(225, 29, 72, 0.2);
+  background: rgba(124, 92, 255, 0.2);
   color: #fca5a5;
   padding: 1px 6px;
   border-radius: 999px;
@@ -1405,4 +1405,16 @@ body {
     bottom: 16px;
     right: 16px;
   }
+}
+
+
+/* Performance polish: keep the existing layout/content, reduce paint cost. */
+.canvas-viewport,
+.canvas-overlay { contain: strict; }
+.feature-card,
+.project-card,
+.quote-card,
+.contact-card { will-change: transform; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
 }
